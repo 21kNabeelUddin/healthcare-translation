@@ -219,24 +219,13 @@ export default function Home() {
   const [outputSearch, setOutputSearch] = useState("");
 
   // Use correct type for recognitionRef
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Use correct types for SpeechRecognition
   const SpeechRecognition =
     typeof window !== "undefined"
       ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
       : undefined;
-
-  // If you get type errors for SpeechRecognition types, run:
-  // npm install --save-dev @types/web-speech-api
-  // Type fallback for environments where web-speech-api types are not available
-  // Remove these if you have @types/web-speech-api installed
-  // @ts-ignore
-  type SpeechRecognition = any;
-  // @ts-ignore
-  type SpeechRecognitionEvent = any;
-  // @ts-ignore
-  type SpeechRecognitionErrorEvent = any;
 
   const filteredInputLanguages = languages.filter(lang =>
     lang.label.toLowerCase().includes(inputSearch.toLowerCase())
@@ -256,7 +245,7 @@ export default function Home() {
     recognition.interimResults = true;
     recognition.continuous = true;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       let interimTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         interimTranscript += event.results[i][0].transcript;
@@ -264,7 +253,7 @@ export default function Home() {
       setOriginalTranscript(interimTranscript);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: any) => {
       setError("Speech recognition error: " + event.error);
       setIsRecording(false);
     };
@@ -384,7 +373,7 @@ export default function Home() {
 
   useEffect(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+      recognitionRef.current.onresult = (event: any) => {
         let interimTranscript = "";
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           interimTranscript += event.results[i][0].transcript;
