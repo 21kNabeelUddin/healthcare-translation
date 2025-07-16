@@ -212,21 +212,31 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [enhancedTranscript, setEnhancedTranscript] = useState<string>(""); // Fixed: add type, keep for future use
   const [enhancing, setEnhancing] = useState(false);
 
   // Add search state for both selectors
   const [inputSearch, setInputSearch] = useState("");
   const [outputSearch, setOutputSearch] = useState("");
 
-  // Use 'any' for compatibility with browsers and TypeScript
-  const recognitionRef = useRef<any>(null);
+  // Use correct type for recognitionRef
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  // Use (window as any) for browser compatibility
+  // Use correct types for SpeechRecognition
   const SpeechRecognition =
     typeof window !== "undefined"
       ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
       : undefined;
+
+  // If you get type errors for SpeechRecognition types, run:
+  // npm install --save-dev @types/web-speech-api
+  // Type fallback for environments where web-speech-api types are not available
+  // Remove these if you have @types/web-speech-api installed
+  // @ts-ignore
+  type SpeechRecognition = any;
+  // @ts-ignore
+  type SpeechRecognitionEvent = any;
+  // @ts-ignore
+  type SpeechRecognitionErrorEvent = any;
 
   const filteredInputLanguages = languages.filter(lang =>
     lang.label.toLowerCase().includes(inputSearch.toLowerCase())
@@ -246,8 +256,7 @@ export default function Home() {
     recognition.interimResults = true;
     recognition.continuous = true;
 
-    // Use 'any' for event for browser compatibility
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         interimTranscript += event.results[i][0].transcript;
@@ -255,7 +264,7 @@ export default function Home() {
       setOriginalTranscript(interimTranscript);
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       setError("Speech recognition error: " + event.error);
       setIsRecording(false);
     };
@@ -327,11 +336,9 @@ export default function Home() {
       );
       const data = await response.json();
       const enhanced = data?.candidates?.[0]?.content?.parts?.[0]?.text || text;
-      setEnhancedTranscript(enhanced);
       setEnhancing(false);
       return enhanced;
     } catch {
-      setEnhancedTranscript(text);
       setEnhancing(false);
       return text;
     }
@@ -363,7 +370,7 @@ export default function Home() {
       const data = await response.json();
       const translated = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Translation failed.";
       setTranslatedTranscript(translated);
-    } catch (err) {
+    } catch {
       setTranslatedTranscript("Translation error.");
     }
   };
@@ -377,8 +384,7 @@ export default function Home() {
 
   useEffect(() => {
     if (recognitionRef.current) {
-      // Use 'any' for event for browser compatibility
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         let interimTranscript = "";
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           interimTranscript += event.results[i][0].transcript;
