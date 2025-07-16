@@ -306,24 +306,11 @@ export default function Home() {
   const enhanceMedicalTerms = async (text: string) => {
     setEnhancing(true);
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=AIzaSyBTpWAYVbYYqUO2J-kPkQfkFW-Tk_vF0Ms`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `Correct any medical terms in this transcript to their proper medical terminology. Return only the corrected transcript: "${text}"`
-                  }
-                ]
-              }
-            ]
-          }),
-        }
-      );
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, targetLang: outputLang, mode: 'enhance' }),
+      });
       const data = await response.json();
       const enhanced = data?.candidates?.[0]?.content?.parts?.[0]?.text || text;
       setEnhancing(false);
@@ -337,26 +324,11 @@ export default function Home() {
   const translateWithGemini = async (text: string, targetLang: string) => {
     setTranslatedTranscript("Translating...");
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=AIzaSyBTpWAYVbYYqUO2J-kPkQfkFW-Tk_vF0Ms`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `Translate the following text to ${languages.find(l => l.code === targetLang)?.label || targetLang}: "${text}". Respond with only the translated sentence, no explanation, no formatting.`
-                  }
-                ]
-              }
-            ]
-          }),
-        }
-      );
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, targetLang, mode: 'translate' }),
+      });
       const data = await response.json();
       const translated = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Translation failed.";
       setTranslatedTranscript(translated);
