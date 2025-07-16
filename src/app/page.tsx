@@ -212,7 +212,7 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [enhancedTranscript, setEnhancedTranscript] = useState("");
+  const [enhancedTranscript, setEnhancedTranscript] = useState<string>(""); // Fixed: add type, keep for future use
   const [enhancing, setEnhancing] = useState(false);
 
   // Add search state for both selectors
@@ -222,10 +222,11 @@ export default function Home() {
   // Use 'any' for compatibility with browsers and TypeScript
   const recognitionRef = useRef<any>(null);
 
-  // @ts-ignore: Allow for browser compatibility
+  // Use (window as any) for browser compatibility
   const SpeechRecognition =
-    typeof window !== "undefined" &&
-    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+    typeof window !== "undefined"
+      ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+      : undefined;
 
   const filteredInputLanguages = languages.filter(lang =>
     lang.label.toLowerCase().includes(inputSearch.toLowerCase())
@@ -245,6 +246,7 @@ export default function Home() {
     recognition.interimResults = true;
     recognition.continuous = true;
 
+    // Use 'any' for event for browser compatibility
     recognition.onresult = (event: any) => {
       let interimTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -367,13 +369,15 @@ export default function Home() {
   };
 
   const debouncedTranslate = useRef(
-    debounce((text: string, targetLang: string) => {
-      translateWithGemini(text, targetLang);
-    }, 800) // 800ms pause before translating
+    debounce((...args: unknown[]) => {
+      // args[0]: text, args[1]: targetLang
+      translateWithGemini(args[0] as string, args[1] as string);
+    }, 800)
   ).current;
 
   useEffect(() => {
     if (recognitionRef.current) {
+      // Use 'any' for event for browser compatibility
       recognitionRef.current.onresult = (event: any) => {
         let interimTranscript = "";
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -408,7 +412,7 @@ export default function Home() {
       <div className="w-full flex justify-start bg-black">
         <ul className="text-white text-base list-disc pl-8 py-2 max-w-2xl text-left">
           <li>Please select languages before speaking</li>
-          <li>It takes approximately 10 seconds to translate due to GEMINI API's latency, so your patience would be greatly appreciated</li>
+          <li>It takes approximately 10 seconds to translate due to GEMINI API&apos;s latency, so your patience would be greatly appreciated</li>
         </ul>
       </div>
 
@@ -485,7 +489,7 @@ export default function Home() {
   );
 }
 
-function debounce<F extends (...args: any[]) => void>(func: F, wait: number) {
+function debounce<F extends (...args: unknown[]) => void>(func: F, wait: number) {
   let timeout: ReturnType<typeof setTimeout>;
   return (...args: Parameters<F>) => {
     clearTimeout(timeout);
